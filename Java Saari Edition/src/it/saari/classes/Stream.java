@@ -220,13 +220,13 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 		return Stream.of(list).filter(predicate).toList().size() == list.size();
 	}
 
-	public void forEach(Consumer<T> consumer) {
+	public void forEach(Consumer<? super T> consumer) {
 		for (T t : list) {
 			consumer.accept(t);
 		}
 	}
 
-	public void forEachOrder(Consumer<T> consumer, Comparator<T> cmp) {
+	public void forEachOrder(Consumer<? super T> consumer, Comparator<T> cmp) {
 		Stream.of(list).sorted(cmp).forEach(consumer);
 	}
 
@@ -374,16 +374,34 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 		return r;
 
 	}
-	
+
 	public static void info() {
-		Stream.of("Questa piccola libreria nasce con l'idea di velocizzare le operazioni"
-				+ " tipiche che si possono incontrare nel gestire collezioni di dati.\nIl pattern"
-				+ " utilizzato e' quello delle Pipes & Filters con il quale e' possibile gestire un"
-				+ " flusso o stream di dati.\nLa nomenclatura resta fedele a Java 8.\n"
-				+ "La libreria può essere utilizzata da Java 5+.\nSpero possa servire come sta servendo"
-				+ " me in alcuni progetti datati e che fanno uso di tecnologie come Java 5.\nPer scambi di idee"
-				+ " collaborazioni o altro: salvatorearianna@gmail.com").print();
-		
+		Stream.of(
+				"Questa piccola libreria nasce con l'idea di velocizzare le operazioni"
+						+ " tipiche che si possono incontrare nel gestire collezioni di dati.\nIl pattern"
+						+ " utilizzato e' quello delle Pipes & Filters con il quale e' possibile gestire un"
+						+ " flusso o stream di dati.\nLa nomenclatura resta fedele a Java 8.\n"
+						+ "La libreria può essere utilizzata da Java 5+.\nSpero possa servire come sta servendo"
+						+ " me in alcuni progetti datati e che fanno uso di tecnologie come Java 5.\nPer scambi di idee"
+						+ " collaborazioni o altro: salvatorearianna@gmail.com")
+				.print();
+
 	}
+
+	public <R> it.saari.interfaces.Stream<R> flatMap(
+			Function<? super T, ? extends it.saari.interfaces.Stream<? extends R>> mapper) {
+		final List<R> res = new LinkedList<R>();
+		for(T t : list) {
+			it.saari.interfaces.Stream<? extends R> stream = mapper.apply(t);
+			stream.forEach(new Consumer<R>() {
+				public void accept(R t) {
+					res.add(t);
+				}
+			});
+		}
+		return Stream.of(res);
+	}
+
+	
 
 }

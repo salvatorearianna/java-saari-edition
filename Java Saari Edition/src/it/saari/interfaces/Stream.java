@@ -130,7 +130,7 @@ public interface Stream<T> {
 	 * @param consumer
 	 *            Funzione che consuma l'elemento.
 	 */
-	public void forEach(Consumer<T> consumer);
+	public void forEach(Consumer<? super T> consumer);
 
 	/**
 	 * Per ogni elemento dello stream in ordine di comparatore viene eseguito un
@@ -141,7 +141,7 @@ public interface Stream<T> {
 	 * @param cmp
 	 *            Comparatore
 	 */
-	public void forEachOrder(Consumer<T> consumer, Comparator<T> cmp);
+	public void forEachOrder(Consumer<? super T> consumer, Comparator<T> cmp);
 
 	/**
 	 * Stampa ogni elemento dello stream terminando la stampa con \n.
@@ -239,5 +239,7 @@ public interface Stream<T> {
 	 * @return Ritorna il risultato dell'operazione di accumulazione.
 	 */
 	public T reduce(T identity, BinaryOperator<T> accumulator);
+	
+	public <R> Stream<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper);
 
 }
