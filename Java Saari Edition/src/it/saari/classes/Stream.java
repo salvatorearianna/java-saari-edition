@@ -470,12 +470,11 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	public <U, R> it.saari.interfaces.Stream<R> zipWith(
 			it.saari.interfaces.Stream<U> other,
 			BiFunction<? super T, ? super U, ? extends R> zipper) {
-		List<T> thisList = this.toList();
 		List<U> otherList = other.toList();
-		int size = Math.min(thisList.size(), otherList.size());
+		int size = Math.min(list.size(), otherList.size());
 		List<R> result = new LinkedList<R>();
 		for (int i = 0; i < size; i++) {
-			result.add(zipper.apply(thisList.get(i), otherList.get(i)));
+			result.add(zipper.apply(list.get(i), otherList.get(i)));
 		}
 		return new Stream<R>(result);
 	}
