@@ -7,239 +7,259 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Rappresenta una sequenza di elementi che supporta operazioni di tipo
+ * Pipes &amp; Filters (Stream) compatibili con Java 5+.
+ *
+ * @param <T> il tipo degli elementi dello stream.
+ */
 public interface Stream<T> {
+
 	/**
 	 * Ordina gli elementi in base al comparatore.
-	 * 
-	 * @param cmp
-	 *            Comparatore
-	 * @return Ritorna uno stream di elementi ordinati.
+	 *
+	 * @param cmp Comparatore per l'ordinamento.
+	 * @return Uno stream di elementi ordinati.
 	 */
-	public Stream<T> sorted(Comparator<T> cmp);
+	Stream<T> sorted(Comparator<T> cmp);
 
 	/**
 	 * Ordina gli elementi invertendo l'ordine del comparatore.
-	 * 
-	 * @param cmp
-	 *            Comparatore
-	 * @return Ritorna uno stream di elementi ordinati al contrario.
+	 *
+	 * @param cmp Comparatore per l'ordinamento inverso.
+	 * @return Uno stream di elementi ordinati al contrario.
 	 */
-	public Stream<T> reverse(Comparator<T> cmp);
+	Stream<T> reverse(Comparator<T> cmp);
 
 	/**
 	 * Filtra gli elementi in base al tipo di filtro.
-	 * 
-	 * @param filter
-	 *            Filtro
-	 * @return Ritorna uno stream di elementi filtrati.
+	 *
+	 * @param filter Filtro da applicare.
+	 * @return Uno stream di elementi filtrati.
 	 */
-	public Stream<T> filter(Filter<? super T> filter);
+	Stream<T> filter(Filter<? super T> filter);
 
 	/**
 	 * Seleziona l'elemento massimo di uno stream in base al comparatore.
-	 * 
-	 * @param comparator
-	 *            Comparatore
-	 * @return Ritorna uno Result<T>.
+	 *
+	 * @param comparator Comparatore per la selezione.
+	 * @return Un {@link Result} contenente l'elemento massimo,
+	 *         oppure {@code null} se lo stream e' vuoto.
 	 */
-	public Result<T> max(Comparator<T> comparator);
+	Result<T> max(Comparator<T> comparator);
 
 	/**
 	 * Seleziona l'elemento minimo di uno stream in base al comparatore.
-	 * 
-	 * @param comparator
-	 *            Comparatore
-	 * @return Ritorna uno Result<T>.
+	 *
+	 * @param comparator Comparatore per la selezione.
+	 * @return Un {@link Result} contenente l'elemento minimo,
+	 *         oppure {@code null} se lo stream e' vuoto.
 	 */
-	public Result<T> min(Comparator<T> comparator);
+	Result<T> min(Comparator<T> comparator);
 
 	/**
-	 * Mappa gli elementi di uno stream.
-	 * 
-	 * @param mapper
-	 *            Mapping
-	 * @return Ritorna uno stream di elementi mappati.
+	 * Mappa gli elementi di uno stream applicando una funzione di trasformazione.
+	 *
+	 * @param <R>    il tipo degli elementi dello stream risultante.
+	 * @param mapper Funzione di mapping.
+	 * @return Uno stream di elementi mappati.
 	 */
-	public <R> Stream<R> map(Function<? super T, ? extends R> mapper);
+	<R> Stream<R> map(Function<? super T, ? extends R> mapper);
 
 	/**
-	 * Converge gli elementi in una List<T>.
-	 * 
-	 * @return Ritorna una Collection di tipo List<T>.
+	 * Mappa ogni elemento dello stream in uno stream e concatena i risultati.
+	 *
+	 * @param <R>    il tipo degli elementi dello stream risultante.
+	 * @param mapper Funzione che produce uno stream per ogni elemento.
+	 * @return Uno stream risultante dalla concatenazione degli stream prodotti.
 	 */
-	public List<T> toList();
+	<R> Stream<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper);
 
 	/**
-	 * Converge gli elementi in una Map<R, T>.
-	 * 
-	 * @param keys
-	 *            Elementi che faranno da chiave.
-	 * @return Ritorna una Collection di tipo Map<R, T>.
+	 * Converge gli elementi in una {@link List}.
+	 *
+	 * @return Una lista contenente gli elementi dello stream.
 	 */
-	public <R> Map<R, T> toMap(List<R> keys);
+	List<T> toList();
 
 	/**
-	 * Converge gli elementi in una Map<R, T>.
-	 * 
-	 * @return Ritorna una Collection di tipo Map<R, T>.
+	 * Converge gli elementi in una {@link Map} utilizzando le chiavi fornite.
+	 *
+	 * @param <R>  il tipo delle chiavi della mappa.
+	 * @param keys Lista di chiavi da associare agli elementi.
+	 * @return Una mappa con le chiavi fornite e i valori dello stream.
 	 */
-	public <R> Map<T, T> toMap();
+	<R> Map<R, T> toMap(List<R> keys);
 
 	/**
-	 * Converge gli elementi in uno Stream-Stack(LIFO).
-	 * 
-	 * @return Ritorna uNO stream.
+	 * Converge gli elementi in una {@link Map} usando gli elementi stessi come chiavi e valori.
+	 *
+	 * @return Una mappa con gli elementi come chiavi e valori.
 	 */
-	public Stream<T> toStack();
+	Map<T, T> toMap();
+
+	/**
+	 * Converge gli elementi in uno Stream con ordine invertito (LIFO).
+	 *
+	 * @return Uno stream con gli elementi in ordine inverso.
+	 */
+	Stream<T> toStack();
 
 	/**
 	 * Seleziona l'elemento i-esimo dello stream.
-	 * 
-	 * @param index
-	 *            Indice dell'elemento.
-	 * @return Ritorna l'elemento selezionato.
+	 *
+	 * @param index Indice dell'elemento.
+	 * @return L'elemento alla posizione indicata.
 	 */
-	public T get(int index);
+	T get(int index);
 
 	/**
-	 * Verifica se vi è nello stream almeno un elemento che verifica la funzione
+	 * Verifica se nello stream esiste almeno un elemento che soddisfa
+	 * la funzione di predicate.
+	 *
+	 * @param predicate Funzione di verifica.
+	 * @return {@code true} se almeno un elemento soddisfa il predicato,
+	 *         {@code false} altrimenti.
+	 */
+	boolean anyMatch(Predicate<T> predicate);
+
+	/**
+	 * Verifica se tutti gli elementi dello stream soddisfano la funzione
 	 * di predicate.
-	 * 
-	 * @param predicate
-	 *            Funzione di verifica.
-	 * @return true nel caso l'elemento è presente nello stream, false se non è
-	 *         presente nessuno elemento che rispetti il predicate.
+	 *
+	 * @param predicate Funzione di verifica.
+	 * @return {@code true} se tutti gli elementi soddisfano il predicato,
+	 *         {@code false} altrimenti.
 	 */
-	public boolean anyMatch(Predicate<T> predicate);
-
-	/**
-	 * Verifica se tutti gli elementi dello stream verificano la funzione di
-	 * predicate.
-	 * 
-	 * @param predicate
-	 *            Funzione di verifica.
-	 * @return true nel caso tutti gli elementi siano presenti nello stream,
-	 *         false se non è presente nessuno elemento che rispetti il
-	 *         predicate.
-	 */
-	public boolean allMatch(Predicate<T> predicate);
+	boolean allMatch(Predicate<T> predicate);
 
 	/**
 	 * Per ogni elemento dello stream viene eseguito un consumatore.
-	 * 
-	 * @param consumer
-	 *            Funzione che consuma l'elemento.
+	 *
+	 * @param consumer Funzione che consuma l'elemento.
 	 */
-	public void forEach(Consumer<? super T> consumer);
+	void forEach(Consumer<? super T> consumer);
 
 	/**
-	 * Per ogni elemento dello stream in ordine di comparatore viene eseguito un
-	 * consumatore.
-	 * 
-	 * @param consumer
-	 *            Funzione che consuma l'elemento.
-	 * @param cmp
-	 *            Comparatore
+	 * Per ogni elemento dello stream, ordinato secondo il comparatore,
+	 * viene eseguito un consumatore.
+	 *
+	 * @param consumer Funzione che consuma l'elemento.
+	 * @param cmp      Comparatore per l'ordinamento.
 	 */
-	public void forEachOrder(Consumer<? super T> consumer, Comparator<T> cmp);
+	void forEachOrder(Consumer<? super T> consumer, Comparator<T> cmp);
 
 	/**
-	 * Stampa ogni elemento dello stream terminando la stampa con \n.
+	 * Stampa ogni elemento dello stream terminando con una nuova riga.
 	 */
-	public void println();
+	void println();
 
 	/**
 	 * Stampa ogni elemento dello stream.
 	 */
-	public void print();
+	void print();
 
 	/**
-	 * Stampa ogni elemento dello stream terminando la stampa con \n. E'
-	 * possibile aggiungere un prefisso e/o un suffisso all'elemento.
-	 * 
-	 * @param prefix
-	 *            Stringa prefissata all'elemento.
-	 * @param suffix
-	 *            Stringa suffissa all'elemento.
+	 * Stampa ogni elemento dello stream terminando con una nuova riga.
+	 * E' possibile aggiungere un prefisso e/o un suffisso all'elemento.
+	 *
+	 * @param prefix Stringa prefissata all'elemento.
+	 * @param suffix Stringa suffissa all'elemento.
 	 */
-	public void println(String prefix, String suffix);
+	void println(String prefix, String suffix);
 
 	/**
-	 * Stampa ogni elemento dello stream.. E' possibile aggiungere un prefisso
+	 * Stampa ogni elemento dello stream. E' possibile aggiungere un prefisso
 	 * e/o un suffisso all'elemento.
-	 * 
-	 * @param prefix
-	 *            Stringa prefissata all'elemento.
-	 * @param suffix
-	 *            Stringa suffissa all'elemento.
+	 *
+	 * @param prefix Stringa prefissata all'elemento.
+	 * @param suffix Stringa suffissa all'elemento.
 	 */
-	public void print(String prefix, String suffix);
+	void print(String prefix, String suffix);
 
-	public void prependln(String prefix);
+	/**
+	 * Stampa ogni elemento dello stream con un prefisso, terminando con una nuova riga.
+	 *
+	 * @param prefix Stringa prefissata all'elemento.
+	 */
+	void prependln(String prefix);
 
-	public void prepend(String prefix);
+	/**
+	 * Stampa ogni elemento dello stream con un prefisso.
+	 *
+	 * @param prefix Stringa prefissata all'elemento.
+	 */
+	void prepend(String prefix);
 
-	public void appendln(String suffix);
+	/**
+	 * Stampa ogni elemento dello stream con un suffisso, terminando con una nuova riga.
+	 *
+	 * @param suffix Stringa suffissa all'elemento.
+	 */
+	void appendln(String suffix);
 
-	public void append(String suffix);
+	/**
+	 * Stampa ogni elemento dello stream con un suffisso.
+	 *
+	 * @param suffix Stringa suffissa all'elemento.
+	 */
+	void append(String suffix);
 
 	/**
 	 * Indica il numero di elementi presenti nello stream.
-	 * 
-	 * @return Le dimensioni dello stream.
+	 *
+	 * @return Il numero di elementi nello stream.
 	 */
-	public long count();
+	long count();
 
 	/**
-	 * Divide lo stream 'from' un indice 'to' un altro indice.
-	 * 
-	 * @param from
-	 *            Indice di partenza.
-	 * @param to
-	 *            Indice di arrivo.
-	 * @return Uno stream di elementi splittati.
+	 * Calcola la somma degli elementi dello stream (solo per stream di Integer).
+	 *
+	 * @return La somma degli elementi, oppure 0 se lo stream non contiene Integer.
 	 */
-	public Stream<T> split(int from, int to);
+	int sum();
 
 	/**
-	 * Splitta lo stream indicando soltanto fin dove arrivare.
-	 * 
-	 * @param max
-	 *            Fin dove deve essere tagliato lo stream.
-	 * @return Uno stream di elementi splittati.
+	 * Divide lo stream da un indice di partenza a un indice di arrivo.
+	 *
+	 * @param from Indice di partenza (incluso).
+	 * @param to   Indice di arrivo (escluso).
+	 * @return Uno stream contenente gli elementi nel range specificato.
 	 */
-	public Stream<T> limit(int max);
+	Stream<T> split(int from, int to);
 
 	/**
-	 * Splitta lo stream indicando da dove si deve partire.
-	 * 
-	 * @param from
-	 *            Da dove si inizia a tagliare lo stream.
-	 * @return Uno stream di elementi splittati.
+	 * Limita lo stream ai primi {@code max} elementi.
+	 *
+	 * @param max Numero massimo di elementi.
+	 * @return Uno stream limitato.
 	 */
-	public Stream<T> skip(int from);
+	Stream<T> limit(int max);
 
 	/**
-	 * Annulla gli elementi che si ripetono all'interno di uno stream.
-	 * L'uguaglianza viene stabilita tramite equals.
-	 * 
+	 * Salta i primi {@code from} elementi dello stream.
+	 *
+	 * @param from Numero di elementi da saltare.
+	 * @return Uno stream senza i primi elementi.
+	 */
+	Stream<T> skip(int from);
+
+	/**
+	 * Rimuove gli elementi duplicati dallo stream.
+	 * L'uguaglianza viene stabilita tramite {@code equals}.
+	 *
 	 * @return Uno stream di elementi distinti.
 	 */
-	public Stream<T> distinct();
+	Stream<T> distinct();
 
 	/**
-	 * Tramite un'operazione di accumulazione si riesce a ridurre gli elementi
-	 * dello stream all'elemento risultate dall'operazione indicata
-	 * nell'accumulatore.
-	 * 
-	 * @param identity
-	 *            Il caso DEFAULT o 0 degli elementi dello stream.
-	 * @param accumulator
-	 *            Accumulatore di elementi.
-	 * @return Ritorna il risultato dell'operazione di accumulazione.
+	 * Riduce gli elementi dello stream a un singolo valore tramite
+	 * un'operazione di accumulazione.
+	 *
+	 * @param identity    Il valore iniziale (identita') dell'accumulazione.
+	 * @param accumulator Operatore binario di accumulazione.
+	 * @return Il risultato dell'operazione di accumulazione.
 	 */
-	public T reduce(T identity, BinaryOperator<T> accumulator);
-	
-	public <R> Stream<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper);
+	T reduce(T identity, BinaryOperator<T> accumulator);
 
 }

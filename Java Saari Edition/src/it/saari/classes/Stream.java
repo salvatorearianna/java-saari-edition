@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package it.saari.classes;
 
 import it.saari.abstracts.BinaryOperator;
@@ -15,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,26 +18,30 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * 
+ * Implementazione concreta di {@link it.saari.interfaces.Stream}.
+ * Fornisce operazioni di tipo Pipes &amp; Filters su collezioni di dati,
+ * compatibili con Java 5+.
+ *
  * @author Salvatore
- * @param <T>
+ * @param <T> il tipo degli elementi dello stream.
  */
 public class Stream<T> implements it.saari.interfaces.Stream<T> {
-	private List<T> list;
+
+	private final List<T> list;
 
 	private Stream(List<T> list) {
 		this.list = list;
 	}
 
-	// ***************************************************************************
-	// COSTRUCTORS
-	// ***************************************************************************
+	// =========================================================================
+	// Factory Methods
+	// =========================================================================
 
 	/**
-	 * Crea uno stream o flusso di elementi.
-	 * 
-	 * @param arr
-	 *            Elementi dell'array.
+	 * Crea uno stream a partire da un array di elementi (varargs).
+	 *
+	 * @param <T> il tipo degli elementi.
+	 * @param arr Elementi dell'array.
 	 * @return Uno stream di elementi T.
 	 */
 	public static <T> it.saari.interfaces.Stream<T> of(T... arr) {
@@ -51,25 +51,24 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	}
 
 	/**
-	 * Crea uno stream o flusso di elementi.
-	 * 
-	 * @param string
-	 *            La stringa che andra' a comporre lo stream.
-	 * @return Uno stream di elementi String dove ogni elemento e' un carattere
-	 *         della stringa iniziale.
+	 * Crea uno stream di caratteri a partire da una stringa.
+	 *
+	 * @param string La stringa da scomporre in caratteri.
+	 * @return Uno stream dove ogni elemento e' un singolo carattere della stringa.
 	 */
 	public static it.saari.interfaces.Stream<String> of(String string) {
 		List<String> tmp = new LinkedList<String>();
-		for (char c : string.toCharArray())
+		for (char c : string.toCharArray()) {
 			tmp.add(String.valueOf(c));
+		}
 		return new Stream<String>(tmp);
 	}
 
 	/**
-	 * Crea uno stream o flusso di elementi.
-	 * 
-	 * @param arr
-	 *            Lista di elementi.
+	 * Crea uno stream a partire da una lista.
+	 *
+	 * @param <T> il tipo degli elementi.
+	 * @param arr Lista di elementi.
 	 * @return Uno stream di elementi T.
 	 */
 	public static <T> it.saari.interfaces.Stream<T> of(List<T> arr) {
@@ -79,10 +78,10 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	}
 
 	/**
-	 * Crea uno stream o flusso di elementi.
-	 * 
-	 * @param arr
-	 *            Albero di elementi.
+	 * Crea uno stream a partire da un Set.
+	 *
+	 * @param <T> il tipo degli elementi.
+	 * @param arr Set di elementi.
 	 * @return Uno stream di elementi T.
 	 */
 	public static <T> it.saari.interfaces.Stream<T> of(Set<T> arr) {
@@ -92,24 +91,25 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	}
 
 	/**
-	 * Crea uno stream o flusso di elementi.
-	 * 
-	 * @param map
-	 *            Mappa di elementi.
-	 * @return Uno stream di elementi Entry<K, V>.
+	 * Crea uno stream di entry a partire da una mappa.
+	 *
+	 * @param <K> il tipo delle chiavi.
+	 * @param <V> il tipo dei valori.
+	 * @param map Mappa di elementi.
+	 * @return Uno stream di {@link Entry}.
 	 */
-	public static <K, V> it.saari.interfaces.Stream<Entry<K, V>> of(
-			Map<K, V> map) {
+	public static <K, V> it.saari.interfaces.Stream<Entry<K, V>> of(Map<K, V> map) {
 		List<Entry<K, V>> tmp = new LinkedList<Entry<K, V>>();
 		tmp.addAll(map.entrySet());
 		return new Stream<Entry<K, V>>(tmp);
 	}
 
 	/**
-	 * Crea uno stream o flusso di elementi.
-	 * 
-	 * @param map
-	 *            Mappa di elementi.
+	 * Crea uno stream dei valori di una mappa.
+	 *
+	 * @param <K> il tipo delle chiavi.
+	 * @param <V> il tipo dei valori.
+	 * @param map Mappa di elementi.
 	 * @return Uno stream dei valori della mappa.
 	 */
 	public static <K, V> it.saari.interfaces.Stream<V> ofValues(Map<K, V> map) {
@@ -119,10 +119,11 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	}
 
 	/**
-	 * Crea uno stream o flusso di elementi.
-	 * 
-	 * @param map
-	 *            Mappa di elementi.
+	 * Crea uno stream delle chiavi di una mappa.
+	 *
+	 * @param <K> il tipo delle chiavi.
+	 * @param <V> il tipo dei valori.
+	 * @param map Mappa di elementi.
 	 * @return Uno stream delle chiavi della mappa.
 	 */
 	public static <K, V> it.saari.interfaces.Stream<K> ofKeys(Map<K, V> map) {
@@ -131,15 +132,23 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 		return new Stream<K>(tmp);
 	}
 
+	// =========================================================================
+	// Stream Operations
+	// =========================================================================
+
 	public it.saari.interfaces.Stream<T> sorted(Comparator<T> cmp) {
-		Collections.sort(list, cmp);
-		return this;
+		List<T> sorted = new LinkedList<T>();
+		sorted.addAll(list);
+		Collections.sort(sorted, cmp);
+		return new Stream<T>(sorted);
 	}
 
 	public it.saari.interfaces.Stream<T> reverse(Comparator<T> cmp) {
 		Comparator<T> revert = Collections.reverseOrder(cmp);
-		Collections.sort(list, revert);
-		return this;
+		List<T> reversed = new LinkedList<T>();
+		reversed.addAll(list);
+		Collections.sort(reversed, revert);
+		return new Stream<T>(reversed);
 	}
 
 	public it.saari.interfaces.Stream<T> filter(Filter<? super T> filter) {
@@ -156,10 +165,9 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 		int res = 0;
 		for (T t : list) {
 			if (t instanceof Integer) {
-				res += Integer.parseInt(t.toString());
+				res += ((Integer) t).intValue();
 			} else {
-				res = 0;
-				break;
+				return 0;
 			}
 		}
 		return res;
@@ -167,57 +175,81 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 
 	public <R> it.saari.interfaces.Stream<R> map(
 			Function<? super T, ? extends R> mapper) {
-		return new StreamMapping<T, R>(list).mapTo(mapper);
+		List<R> tmp = new LinkedList<R>();
+		for (T t : list) {
+			tmp.add(mapper.apply(t));
+		}
+		return new Stream<R>(tmp);
 	}
 
+	public <R> it.saari.interfaces.Stream<R> flatMap(
+			Function<? super T, ? extends it.saari.interfaces.Stream<? extends R>> mapper) {
+		final List<R> res = new LinkedList<R>();
+		for (T t : list) {
+			it.saari.interfaces.Stream<? extends R> stream = mapper.apply(t);
+			stream.forEach(new Consumer<R>() {
+				public void accept(R r) {
+					res.add(r);
+				}
+			});
+		}
+		return new Stream<R>(res);
+	}
+
+	// =========================================================================
+	// Terminal Operations
+	// =========================================================================
+
 	public List<T> toList() {
-		return list;
+		return new LinkedList<T>(list);
 	}
 
 	public <R> Map<R, T> toMap(List<R> keys) {
-		return new StreamMapping<T, R>(list).toMap(keys);
+		Map<R, T> map = new LinkedHashMap<R, T>();
+		int size = Math.min(list.size(), keys.size());
+		for (int i = 0; i < size; i++) {
+			if (keys.get(i) != null) {
+				map.put(keys.get(i), list.get(i));
+			}
+		}
+		return map;
 	}
 
-	public <R> Map<T, T> toMap() {
-		return new StreamMapping<T, T>(list).toMap(list);
+	public Map<T, T> toMap() {
+		Map<T, T> map = new LinkedHashMap<T, T>();
+		for (T t : list) {
+			map.put(t, t);
+		}
+		return map;
 	}
 
-	private class StreamMapping<W, R> {
+	public it.saari.interfaces.Stream<T> toStack() {
+		List<T> tmp = new LinkedList<T>();
+		tmp.addAll(list);
+		Collections.reverse(tmp);
+		return new Stream<T>(tmp);
+	}
 
-		public List<W> list;
-
-		public StreamMapping(List<W> list) {
-			this.list = list;
-		}
-
-		public it.saari.interfaces.Stream<R> mapTo(
-				Function<? super W, ? extends R> mapper) {
-			List<R> tmp = new LinkedList<R>();
-			for (int i = 0; i < list.size(); i++) {
-				W t = list.get(i);
-				R r = mapper.apply(t);
-				tmp.add(r);
-			}
-			return new Stream<R>(tmp);
-		}
-
-		public Map<R, W> toMap(List<R> keys) {
-			Map<R, W> map = new LinkedHashMap<R, W>();
-			for (int i = 0; i < list.size(); i++) {
-				if (keys != null && keys.get(i) != null) {
-					map.put(keys.get(i), list.get(i));
-				}
-			}
-			return map;
-		}
+	public T get(int index) {
+		return list.get(index);
 	}
 
 	public boolean anyMatch(Predicate<T> predicate) {
-		return Stream.of(list).filter(predicate).toList().size() > 0;
+		for (T t : list) {
+			if (predicate.test(t)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public boolean allMatch(Predicate<T> predicate) {
-		return Stream.of(list).filter(predicate).toList().size() == list.size();
+		for (T t : list) {
+			if (!predicate.test(t)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public void forEach(Consumer<? super T> consumer) {
@@ -227,20 +259,7 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	}
 
 	public void forEachOrder(Consumer<? super T> consumer, Comparator<T> cmp) {
-		Stream.of(list).sorted(cmp).forEach(consumer);
-	}
-
-	public static class Result<W> {
-
-		private W t;
-
-		public Result(W t) {
-			this.t = t;
-		}
-
-		public W get() {
-			return t;
-		}
+		sorted(cmp).forEach(consumer);
 	}
 
 	public long count() {
@@ -248,10 +267,13 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	}
 
 	public Result<T> max(Comparator<T> comparator) {
+		if (list.isEmpty()) {
+			return null;
+		}
 		T res = list.get(0);
-		for (T t : list) {
-			int c = comparator.compare(res, t);
-			if (c < 0) {
+		for (int i = 1; i < list.size(); i++) {
+			T t = list.get(i);
+			if (comparator.compare(res, t) < 0) {
 				res = t;
 			}
 		}
@@ -259,15 +281,52 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 	}
 
 	public Result<T> min(Comparator<T> comparator) {
+		if (list.isEmpty()) {
+			return null;
+		}
 		T res = list.get(0);
-		for (T t : list) {
-			int c = comparator.compare(res, t);
-			if (c > 0) {
+		for (int i = 1; i < list.size(); i++) {
+			T t = list.get(i);
+			if (comparator.compare(res, t) > 0) {
 				res = t;
 			}
 		}
 		return new Result<T>(res);
 	}
+
+	public T reduce(T identity, BinaryOperator<T> accumulator) {
+		T result = identity;
+		for (T t : list) {
+			result = accumulator.apply(result, t);
+		}
+		return result;
+	}
+
+	// =========================================================================
+	// Slicing Operations
+	// =========================================================================
+
+	public it.saari.interfaces.Stream<T> split(int from, int to) {
+		return new Stream<T>(new LinkedList<T>(list.subList(from, to)));
+	}
+
+	public it.saari.interfaces.Stream<T> limit(int max) {
+		return split(0, Math.min(max, list.size()));
+	}
+
+	public it.saari.interfaces.Stream<T> skip(int from) {
+		return split(Math.min(from, list.size()), list.size());
+	}
+
+	public it.saari.interfaces.Stream<T> distinct() {
+		LinkedHashSet<T> seen = new LinkedHashSet<T>();
+		seen.addAll(list);
+		return new Stream<T>(new LinkedList<T>(seen));
+	}
+
+	// =========================================================================
+	// Print Operations
+	// =========================================================================
 
 	public void println() {
 		for (T t : list) {
@@ -321,87 +380,43 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 		System.out.print(prefix + t + suffix);
 	}
 
-	public it.saari.interfaces.Stream<T> split(int from, int to) {
-		return Stream.of(list.subList(from, to));
-	}
+	// =========================================================================
+	// Utility
+	// =========================================================================
 
-	public it.saari.interfaces.Stream<T> limit(int max) {
-		return Stream.of(list).split(0, max);
-	}
+	/**
+	 * Wrapper per il risultato di operazioni terminali come {@code max} e {@code min}.
+	 *
+	 * @param <W> il tipo del risultato.
+	 */
+	public static class Result<W> {
 
-	public it.saari.interfaces.Stream<T> skip(int from) {
-		return Stream.of(list).split(from, list.size());
-	}
+		private final W t;
 
-	public it.saari.interfaces.Stream<T> distinct() {
-		final LinkedList<T> newList = new LinkedList<T>();
-		Stream.of(list).forEach(new Consumer<T>() {
-			public void accept(T t) {
-				if (!newList.contains(t)) {
-					newList.add(t);
-				}
-			}
-		});
-		return Stream.of(newList);
-	}
-
-	public it.saari.interfaces.Stream<T> toStack() {
-		List<T> tmp = new LinkedList<T>();
-		tmp.addAll(list);
-		Collections.reverse(tmp);
-		return new Stream<T>(tmp);
-	}
-
-	public T get(int index) {
-		return list.get(index);
-	}
-
-	public T reduce(T identity, BinaryOperator<T> accumulator) {
-		if (list == null)
-			return identity;
-		T t = reduction(identity, (list.size() - 1), accumulator);
-		return t;
-	}
-
-	private T reduction(T identity, int index, BinaryOperator<T> accumulator) {
-		T r = null;
-		if ((index - 1) >= 0) {
-			r = reduction(identity, (index - 1), accumulator);
+		public Result(W t) {
+			this.t = t;
 		}
-		if (r == null)
-			r = identity;
-		r = accumulator.apply(r, list.get(index));
-		return r;
 
+		public W get() {
+			return t;
+		}
 	}
 
+	/**
+	 * Stampa le informazioni sulla libreria.
+	 */
 	public static void info() {
 		Stream.of(
 				"Questa piccola libreria nasce con l'idea di velocizzare le operazioni"
-						+ " tipiche che si possono incontrare nel gestire collezioni di dati.\nIl pattern"
-						+ " utilizzato e' quello delle Pipes & Filters con il quale e' possibile gestire un"
-						+ " flusso o stream di dati.\nLa nomenclatura resta fedele a Java 8.\n"
-						+ "La libreria può essere utilizzata da Java 5+.\nSpero possa servire come sta servendo"
-						+ " me in alcuni progetti datati e che fanno uso di tecnologie come Java 5.\nPer scambi di idee"
-						+ " collaborazioni o altro: salvatorearianna@gmail.com")
+						+ " tipiche che si possono incontrare nel gestire collezioni di dati.\n"
+						+ "Il pattern utilizzato e' quello delle Pipes & Filters con il quale e'"
+						+ " possibile gestire un flusso o stream di dati.\n"
+						+ "La nomenclatura resta fedele a Java 8.\n"
+						+ "La libreria puo' essere utilizzata da Java 5+.\n"
+						+ "Spero possa servire come sta servendo me in alcuni progetti datati"
+						+ " e che fanno uso di tecnologie come Java 5.\n"
+						+ "Per scambi di idee collaborazioni o altro: salvatorearianna@gmail.com")
 				.print();
-
 	}
-
-	public <R> it.saari.interfaces.Stream<R> flatMap(
-			Function<? super T, ? extends it.saari.interfaces.Stream<? extends R>> mapper) {
-		final List<R> res = new LinkedList<R>();
-		for(T t : list) {
-			it.saari.interfaces.Stream<? extends R> stream = mapper.apply(t);
-			stream.forEach(new Consumer<R>() {
-				public void accept(R t) {
-					res.add(t);
-				}
-			});
-		}
-		return Stream.of(res);
-	}
-
-	
 
 }
