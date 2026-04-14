@@ -6,6 +6,7 @@ import it.saari.classes.Stream.Result;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Rappresenta una sequenza di elementi che supporta operazioni di tipo
@@ -263,5 +264,131 @@ public interface Stream<T> {
 	 * @return Il risultato dell'operazione di accumulazione.
 	 */
 	T reduce(T identity, BinaryOperator<T> accumulator);
+
+	// =========================================================================
+	// Nuove operazioni
+	// =========================================================================
+
+	/**
+	 * Verifica se nessun elemento dello stream soddisfa il predicato.
+	 *
+	 * @param predicate Funzione di verifica.
+	 * @return {@code true} se nessun elemento soddisfa il predicato,
+	 *         {@code false} altrimenti.
+	 */
+	boolean noneMatch(Predicate<T> predicate);
+
+	/**
+	 * Restituisce il primo elemento dello stream.
+	 *
+	 * @return Un {@link Result} contenente il primo elemento,
+	 *         oppure {@code null} se lo stream e' vuoto.
+	 */
+	Result<T> findFirst();
+
+	/**
+	 * Restituisce l'ultimo elemento dello stream.
+	 *
+	 * @return Un {@link Result} contenente l'ultimo elemento,
+	 *         oppure {@code null} se lo stream e' vuoto.
+	 */
+	Result<T> findLast();
+
+	/**
+	 * Verifica se lo stream contiene l'elemento specificato.
+	 * L'uguaglianza viene stabilita tramite {@code equals}.
+	 *
+	 * @param element Elemento da cercare.
+	 * @return {@code true} se l'elemento e' presente, {@code false} altrimenti.
+	 */
+	boolean contains(T element);
+
+	/**
+	 * Verifica se lo stream e' vuoto.
+	 *
+	 * @return {@code true} se lo stream non contiene elementi, {@code false} altrimenti.
+	 */
+	boolean isEmpty();
+
+	/**
+	 * Converge gli elementi in un {@link Set}, rimuovendo i duplicati.
+	 *
+	 * @return Un set contenente gli elementi dello stream.
+	 */
+	Set<T> toSet();
+
+	/**
+	 * Esegue un'azione su ogni elemento dello stream e restituisce lo stream stesso.
+	 * Utile per operazioni di debug o logging intermedio nella catena di operazioni.
+	 *
+	 * @param consumer Funzione che consuma l'elemento.
+	 * @return Lo stesso stream (per il chaining).
+	 */
+	Stream<T> peek(Consumer<? super T> consumer);
+
+	/**
+	 * Concatena gli elementi di un altro stream a questo stream.
+	 *
+	 * @param other L'altro stream da concatenare.
+	 * @return Uno stream contenente gli elementi di entrambi gli stream.
+	 */
+	Stream<T> concat(Stream<? extends T> other);
+
+	/**
+	 * Unisce gli elementi dello stream in una singola stringa,
+	 * separandoli con il delimitatore specificato.
+	 *
+	 * @param delimiter Stringa separatrice tra gli elementi.
+	 * @return Una stringa con tutti gli elementi concatenati.
+	 */
+	String joining(String delimiter);
+
+	/**
+	 * Prende gli elementi finche' il predicato e' soddisfatto.
+	 * Si ferma al primo elemento che non soddisfa il predicato.
+	 *
+	 * @param predicate Funzione di verifica.
+	 * @return Uno stream con gli elementi iniziali che soddisfano il predicato.
+	 */
+	Stream<T> takeWhile(Predicate<T> predicate);
+
+	/**
+	 * Scarta gli elementi finche' il predicato e' soddisfatto.
+	 * Inizia a includere dal primo elemento che non soddisfa il predicato.
+	 *
+	 * @param predicate Funzione di verifica.
+	 * @return Uno stream senza gli elementi iniziali che soddisfano il predicato.
+	 */
+	Stream<T> dropWhile(Predicate<T> predicate);
+
+	/**
+	 * Raggruppa gli elementi dello stream secondo una funzione classificatrice.
+	 *
+	 * @param <K>        il tipo delle chiavi del raggruppamento.
+	 * @param classifier Funzione che mappa ogni elemento alla sua chiave di raggruppamento.
+	 * @return Una mappa dove ogni chiave e' associata alla lista degli elementi corrispondenti.
+	 */
+	<K> Map<K, List<T>> groupBy(Function<? super T, ? extends K> classifier);
+
+	/**
+	 * Calcola la media aritmetica degli elementi dello stream.
+	 * Questo metodo e' applicabile solo a stream di tipo numerico (Integer, Double, ecc.).
+	 *
+	 * @return La media aritmetica degli elementi.
+	 * @throws IllegalStateException se lo stream e' vuoto o contiene elementi non numerici.
+	 */
+	double average();
+
+	/**
+	 * Combina questo stream con un altro, applicando una funzione di combinazione
+	 * elemento per elemento. La lunghezza del risultato e' uguale al minore tra i due stream.
+	 *
+	 * @param <U>    il tipo degli elementi dell'altro stream.
+	 * @param <R>    il tipo degli elementi dello stream risultante.
+	 * @param other  L'altro stream con cui combinare.
+	 * @param zipper Funzione che combina un elemento di questo stream con uno dell'altro.
+	 * @return Uno stream risultante dalla combinazione elemento per elemento.
+	 */
+	<U, R> Stream<R> zipWith(Stream<U> other, BiFunction<? super T, ? super U, ? extends R> zipper);
 
 }
