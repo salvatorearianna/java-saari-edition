@@ -213,9 +213,11 @@ public interface Stream<T> {
 	long count();
 
 	/**
-	 * Calcola la somma degli elementi dello stream (solo per stream di Integer).
+	 * Calcola la somma degli elementi dello stream.
+	 * Questo metodo e' applicabile solo a stream di tipo {@code Integer}.
 	 *
-	 * @return La somma degli elementi, oppure 0 se lo stream non contiene Integer.
+	 * @return La somma degli elementi.
+	 * @throws IllegalStateException se lo stream contiene elementi non di tipo Integer.
 	 */
 	int sum();
 

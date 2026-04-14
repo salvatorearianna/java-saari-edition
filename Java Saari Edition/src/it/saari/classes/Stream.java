@@ -167,7 +167,9 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 			if (t instanceof Integer) {
 				res += ((Integer) t).intValue();
 			} else {
-				return 0;
+				throw new IllegalStateException(
+						"sum() e' applicabile solo a stream di Integer, trovato: "
+								+ (t == null ? "null" : t.getClass().getName()));
 			}
 		}
 		return res;
