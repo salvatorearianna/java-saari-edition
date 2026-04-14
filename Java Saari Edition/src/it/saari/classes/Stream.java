@@ -1,10 +1,12 @@
 package it.saari.classes;
 
 import it.saari.abstracts.BinaryOperator;
+import it.saari.interfaces.BiFunction;
 import it.saari.interfaces.Consumer;
 import it.saari.interfaces.Filter;
 import it.saari.interfaces.Function;
 import it.saari.interfaces.Predicate;
+import it.saari.interfaces.Supplier;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -130,6 +132,86 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 		List<K> tmp = new LinkedList<K>();
 		tmp.addAll(map.keySet());
 		return new Stream<K>(tmp);
+	}
+
+	/**
+	 * Crea uno stream vuoto.
+	 *
+	 * @param <T> il tipo degli elementi.
+	 * @return Uno stream vuoto.
+	 */
+	public static <T> it.saari.interfaces.Stream<T> empty() {
+		return new Stream<T>(new LinkedList<T>());
+	}
+
+	/**
+	 * Crea uno stream generando elementi tramite un {@link Supplier}.
+	 *
+	 * @param <T>      il tipo degli elementi.
+	 * @param supplier Fornitore di elementi.
+	 * @param count    Numero di elementi da generare.
+	 * @return Uno stream di elementi generati.
+	 * @throws IllegalArgumentException se count e' negativo.
+	 */
+	public static <T> it.saari.interfaces.Stream<T> generate(Supplier<T> supplier, int count) {
+		if (count < 0) {
+			throw new IllegalArgumentException("count non puo' essere negativo: " + count);
+		}
+		List<T> tmp = new LinkedList<T>();
+		for (int i = 0; i < count; i++) {
+			tmp.add(supplier.get());
+		}
+		return new Stream<T>(tmp);
+	}
+
+	/**
+	 * Crea uno stream contenente un singolo elemento ripetuto {@code count} volte.
+	 *
+	 * @param <T>     il tipo dell'elemento.
+	 * @param element L'elemento da ripetere.
+	 * @param count   Numero di ripetizioni.
+	 * @return Uno stream con l'elemento ripetuto.
+	 * @throws IllegalArgumentException se count e' negativo.
+	 */
+	public static <T> it.saari.interfaces.Stream<T> repeat(T element, int count) {
+		if (count < 0) {
+			throw new IllegalArgumentException("count non puo' essere negativo: " + count);
+		}
+		List<T> tmp = new LinkedList<T>();
+		for (int i = 0; i < count; i++) {
+			tmp.add(element);
+		}
+		return new Stream<T>(tmp);
+	}
+
+	/**
+	 * Crea uno stream di interi nell'intervallo [start, end).
+	 *
+	 * @param start Valore iniziale (incluso).
+	 * @param end   Valore finale (escluso).
+	 * @return Uno stream di interi nell'intervallo specificato.
+	 */
+	public static it.saari.interfaces.Stream<Integer> range(int start, int end) {
+		List<Integer> tmp = new LinkedList<Integer>();
+		for (int i = start; i < end; i++) {
+			tmp.add(Integer.valueOf(i));
+		}
+		return new Stream<Integer>(tmp);
+	}
+
+	/**
+	 * Crea uno stream di interi nell'intervallo [start, end].
+	 *
+	 * @param start Valore iniziale (incluso).
+	 * @param end   Valore finale (incluso).
+	 * @return Uno stream di interi nell'intervallo specificato.
+	 */
+	public static it.saari.interfaces.Stream<Integer> rangeClosed(int start, int end) {
+		List<Integer> tmp = new LinkedList<Integer>();
+		for (int i = start; i <= end; i++) {
+			tmp.add(Integer.valueOf(i));
+		}
+		return new Stream<Integer>(tmp);
 	}
 
 	// =========================================================================
@@ -302,6 +384,151 @@ public class Stream<T> implements it.saari.interfaces.Stream<T> {
 			result = accumulator.apply(result, t);
 		}
 		return result;
+	}
+
+	// =========================================================================
+	// New Query Operations
+	// =========================================================================
+
+	public boolean noneMatch(Predicate<T> predicate) {
+		for (T t : list) {
+			if (predicate.test(t)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public Result<T> findFirst() {
+		if (list.isEmpty()) {
+			return null;
+		}
+		return new Result<T>(list.get(0));
+	}
+
+	public Result<T> findLast() {
+		if (list.isEmpty()) {
+			return null;
+		}
+		return new Result<T>(list.get(list.size() - 1));
+	}
+
+	public boolean contains(T element) {
+		return list.contains(element);
+	}
+
+	public boolean isEmpty() {
+		return list.isEmpty();
+	}
+
+	// =========================================================================
+	// New Transformation Operations
+	// =========================================================================
+
+	public it.saari.interfaces.Stream<T> peek(Consumer<? super T> consumer) {
+		for (T t : list) {
+			consumer.accept(t);
+		}
+		return this;
+	}
+
+	public it.saari.interfaces.Stream<T> concat(it.saari.interfaces.Stream<? extends T> other) {
+		final List<T> merged = new LinkedList<T>();
+		merged.addAll(list);
+		other.forEach(new Consumer<T>() {
+			public void accept(T t) {
+				merged.add(t);
+			}
+		});
+		return new Stream<T>(merged);
+	}
+
+	public it.saari.interfaces.Stream<T> takeWhile(Predicate<T> predicate) {
+		List<T> result = new LinkedList<T>();
+		for (T t : list) {
+			if (!predicate.test(t)) {
+				break;
+			}
+			result.add(t);
+		}
+		return new Stream<T>(result);
+	}
+
+	public it.saari.interfaces.Stream<T> dropWhile(Predicate<T> predicate) {
+		List<T> result = new LinkedList<T>();
+		boolean dropping = true;
+		for (T t : list) {
+			if (dropping && predicate.test(t)) {
+				continue;
+			}
+			dropping = false;
+			result.add(t);
+		}
+		return new Stream<T>(result);
+	}
+
+	public <U, R> it.saari.interfaces.Stream<R> zipWith(
+			it.saari.interfaces.Stream<U> other,
+			BiFunction<? super T, ? super U, ? extends R> zipper) {
+		List<U> otherList = other.toList();
+		int size = Math.min(list.size(), otherList.size());
+		List<R> result = new LinkedList<R>();
+		for (int i = 0; i < size; i++) {
+			result.add(zipper.apply(list.get(i), otherList.get(i)));
+		}
+		return new Stream<R>(result);
+	}
+
+	// =========================================================================
+	// New Terminal / Collector Operations
+	// =========================================================================
+
+	public Set<T> toSet() {
+		return new LinkedHashSet<T>(list);
+	}
+
+	public String joining(String delimiter) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < list.size(); i++) {
+			if (i > 0) {
+				sb.append(delimiter);
+			}
+			sb.append(list.get(i));
+		}
+		return sb.toString();
+	}
+
+	public <K> Map<K, List<T>> groupBy(
+			Function<? super T, ? extends K> classifier) {
+		Map<K, List<T>> map = new LinkedHashMap<K, List<T>>();
+		for (T t : list) {
+			K key = classifier.apply(t);
+			List<T> group = map.get(key);
+			if (group == null) {
+				group = new LinkedList<T>();
+				map.put(key, group);
+			}
+			group.add(t);
+		}
+		return map;
+	}
+
+	public double average() {
+		if (list.isEmpty()) {
+			throw new IllegalStateException(
+					"average() non e' applicabile a uno stream vuoto.");
+		}
+		double total = 0.0;
+		for (T t : list) {
+			if (t instanceof Number) {
+				total += ((Number) t).doubleValue();
+			} else {
+				throw new IllegalStateException(
+						"average() e' applicabile solo a stream di numeri, trovato: "
+								+ (t == null ? "null" : t.getClass().getName()));
+			}
+		}
+		return total / list.size();
 	}
 
 	// =========================================================================
